@@ -309,8 +309,7 @@ NAT_configure(){
     local use_SNAT_str
     NAT_TYPE="m"
     read -p "Use SNAT could implove the speed,but your server MUST have static ip address, Y|n?" use_SNAT_str
-    if [ "$use_SNAT_str" = "n" ]; then
-    else
+    if [ "$use_SNAT_str" != "n" ]; then
         NAT_TYPE="s"
         echo -e "$(__yellow "ip address info:")"
         ip address

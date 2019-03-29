@@ -5,9 +5,7 @@ INTERFACE=$1
 INTERFACE_OPT_IN=""
 INTERFACE_OPT_OUT=""
 
-if [ "$INTERFACE" = "" ]; then
-
-else
+if [ "$INTERFACE" != "" ]; then
   INTERFACE_OPT_IN="-i ${INTERFACE}"
   INTERFACE_OPT_OUT="-o ${INTERFACE}"
 fi

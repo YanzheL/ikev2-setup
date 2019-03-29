@@ -11,9 +11,7 @@ POST_DST_OPT=$POST_DST_OPT
 
 VIP_RANGE="10.31.2.0/24"
 
-if [ "$INTERFACE" = "" ]; then
-
-else
+if [ "$INTERFACE" != "" ]; then
   INTERFACE_OPT_IN="-i ${INTERFACE}"
   INTERFACE_OPT_OUT="-o ${INTERFACE}"
   interface_ip="$(ip address show ${INTERFACE}|grep -oP '(?<=inet\s)\d+\.\d+\.\d+\.\d+')"
