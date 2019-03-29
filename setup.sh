@@ -422,7 +422,7 @@ case $1 in
         cd $CUR_DIR
         install_ikev2
         read -p "Install type, s or c:(c)" INSTALL_TYPE
-        if [ $INSTALL_TYPE -eq "s" ]; then
+        if [ $INSTALL_TYPE = "s" ]; then
             NAT_configure
         fi
         ;;
