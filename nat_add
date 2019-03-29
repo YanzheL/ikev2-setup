@@ -1,0 +1,76 @@
+#!/bin/bash
+
+NAT_TYPE=$1
+INTERFACE=$2
+
+INTERFACE_OPT_IN=""
+INTERFACE_OPT_OUT=""
+
+# format: POST_DST_OPT="! -d x.x.x.x/x"
+POST_DST_OPT=$POST_DST_OPT
+
+VIP_RANGE="10.31.2.0/24"
+
+if [ "$INTERFACE" = "" ]; then
+
+else
+  INTERFACE_OPT_IN="-i ${INTERFACE}"
+  INTERFACE_OPT_OUT="-o ${INTERFACE}"
+  interface_ip="$(ip address show ${INTERFACE}|grep -oP '(?<=inet\s)\d+\.\d+\.\d+\.\d+')"
+fi
+
+SNAT=( \
+"POSTROUTING -s $VIP_RANGE $POST_DST_OPT $INTERFACE_OPT_OUT -j SNAT --to-source $interface_ip" \
+)
+
+NAT=( \
+"POSTROUTING -s $VIP_RANGE $POST_DST_OPT $INTERFACE_OPT_OUT -j MASQUERADE" \
+)
+
+RULES=( \
+"FORWARD -s $VIP_RANGE  -j ACCEPT" \
+)
+
+case $NAT_TYPE in
+    s)
+        NAT_RULES=$SNAT
+        ;;
+    m)
+        NAT_RULES=$NAT
+        ;;
+    *)
+        echo "$(__red "Usage"): nat_add [s|m] [interface]"
+        exit 1
+        ;;
+esac
+
+for i in $(seq 0 ${#RULES[@]}); do
+  rule=${RULES[$i]}
+  if [ "$rule" = "" ]; then
+    continue
+  fi
+  cat >> /etc/network/if-up.d/iptables <<-EOF
+iptables -C ${rule}
+if [ \$? -ne 0 ]; then
+  iptables -A ${rule}
+elif [ "\$1" = "reverse" ]; then
+  iptables -D ${rule}
+fi
+EOF
+done
+
+for i in $(seq 0 ${#NAT_RULES[@]}); do
+  rule=${NAT_RULES[$i]}
+  if [ "$rule" = "" ]; then
+    continue
+  fi
+  cat >> /etc/network/if-up.d/iptables <<-EOF
+iptables -t nat -C ${rule}
+if [ \$? -ne 0 ]; then
+  iptables -t nat -A ${rule}
+elif [ "\$1" = "reverse" ]; then
+  iptables -t nat -D ${rule}
+fi
+EOF
+done
+cat /etc/network/if-up.d/iptables

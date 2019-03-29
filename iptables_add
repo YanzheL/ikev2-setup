@@ -1,0 +1,56 @@
+#!/bin/bash
+
+INTERFACE=$1
+
+INTERFACE_OPT_IN=""
+INTERFACE_OPT_OUT=""
+
+if [ "$INTERFACE" = "" ]; then
+
+else
+  INTERFACE_OPT_IN="-i ${INTERFACE}"
+  INTERFACE_OPT_OUT="-o ${INTERFACE}"
+fi
+
+RULES=( \
+"FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT" \
+"INPUT $INTERFACE_OPT_IN -p esp -j ACCEPT" \
+"INPUT $INTERFACE_OPT_IN -p udp --dport 500 -j ACCEPT" \
+"INPUT $INTERFACE_OPT_IN -p tcp --dport 500 -j ACCEPT" \
+"INPUT $INTERFACE_OPT_IN -p udp --dport 4500 -j ACCEPT" \
+"INPUT $INTERFACE_OPT_IN -p tcp --dport 4500 -j ACCEPT" \
+"INPUT $INTERFACE_OPT_IN -p udp --dport 1701 -j ACCEPT" \
+"INPUT $INTERFACE_OPT_IN -p tcp --dport 1723 -j ACCEPT" \
+)
+
+
+cat > /etc/network/if-up.d/iptables <<-EOF
+#!/bin/bash
+EOF
+
+for i in $(seq 0 ${#RULES[@]}); do
+  rule=${RULES[$i]}
+  if [ "$rule" = "" ]; then
+    continue
+  fi
+  cat >> /etc/network/if-up.d/iptables <<-EOF
+iptables -C ${rule}
+if [ \$? -ne 0 ]; then
+  iptables -A ${rule}
+elif [ "\$1" = "reverse" ]; then
+  iptables -D ${rule}
+fi
+EOF
+done
+
+cat >> /etc/network/if-up.d/iptables <<-EOF
+LOG_FILE=/var/log/iptables-up.log
+if [ \$? -eq 0 ]; then
+  echo "\$(date): Success! Args = \$1, \$2" >> \$LOG_FILE
+else
+  echo "\$(date): Failed! Args = \$1, \$2" >> \$LOG_FILE
+fi
+EOF
+
+chmod +x /etc/network/if-up.d/iptables
+cat /etc/network/if-up.d/iptables
