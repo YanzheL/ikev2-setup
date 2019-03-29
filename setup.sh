@@ -445,7 +445,7 @@ case $1 in
         fi
         ;;
     *)
-        echo "$(__red "Usage"): one-key-ikev2.sh [install|upgrade|uninstall]"
+        echo "$(__red "Usage"): setup.sh [install|upgrade|uninstall]"
         exit 1
         ;;
 esac
